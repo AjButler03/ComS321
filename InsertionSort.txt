@@ -1,0 +1,203 @@
+// COM S 321 pa1
+// due March 23, 2024
+// Andrew Butler (ajbutler@iastate.edu)
+
+// Saved values:
+// X19: base address for array 'a'; for my purposes, 0
+// X20: variable 'n'; for my purposes, initialized to 10
+
+ADDI X19, XZR, #0 // in case it isn't already 0 I guess
+ADDI X20, XZR, #10 // n = 10 arbitrarily to test
+ADDI SP, XZR, #512 // put stack pointer away from array
+
+MAIN:
+ADDI X0, X19, #0 // passing base address a to fill
+ADDI X1, X20, #0 // passing 'n' to fill
+BL FILL // calling fill(a, n)
+
+ADDI X0, X19, #0 // passing base address a to INSERTION_SORT in X0
+ADDI X1, X20, #0 // passing n to INSERTION_SORT in X1
+BL INSERTION_SORT // calling insertion_sort(a, n)
+
+// Binary Search for 0
+ADDI X0, X19, #0 // passing a in X0
+ADDI X1, XZR, #0 // passing 0 for start 
+SUBI X2, X20, #1 // passing n-1 for end
+ADDI X3, XZR, #0 // passing 0 for value
+BL BINARY_SEARCH
+PRNT X0
+
+// Binary Search for 9
+ADDI X0, X19, #0 // passing a in X0
+ADDI X1, XZR, #0 // passing 0 for start 
+SUBI X2, X20, #1 // passing n-1 for end
+ADDI X3, XZR, #9 // passing 9 for value
+BL BINARY_SEARCH
+PRNT X0
+
+// Binary Search for 4
+ADDI X0, X19, #0 // passing a in X0
+ADDI X1, XZR, #0 // passing 0 for start 
+SUBI X2, X20, #1 // passing n-1 for end
+ADDI X3, XZR, #4 // passing 0 for value
+BL BINARY_SEARCH
+PRNT X0
+
+// Binary Search for 15
+ADDI X0, X19, #0 // passing a in X0
+ADDI X1, XZR, #0 // passing 0 for start 
+SUBI X2, X20, #1 // passing n-1 for end
+ADDI X3, XZR, #15 // passing 0 for value
+BL BINARY_SEARCH
+PRNT X0
+
+// BL PRINT_ARR
+
+BL PRINT_ARR
+B EXIT // end of file
+
+
+FILL:
+// base address a in X0
+// 'n' in X1
+ORR X2, XZR, XZR // i = 0
+FILL_L:
+LSL X9, X2, #3 // idx = i*8 for address offset
+ADD X9, X0, X9 // X9 = address of a[i]
+SUB X10, X1, X2 // n - i
+SUBI X10, X10, #1 // (n-i) - 1
+STUR X10, [X9, #0] // a[i] = n - i - 1
+ADDI X2, X2, #1 // i++
+SUBS X15, X2, X1 // i - n
+B.LT FILL_L // i < n ? If yes, loop
+BR LR
+
+
+INSERTION_SORT:
+// base address a stored in X0
+// variable n stored in X1
+ADDI X2, XZR, #1 // i = 1
+IS_MAIN_L:
+LSL X9, X2, #3 // idx = i*8 for address offset
+ADD X9, X0, X9 // address of a[i]
+LDUR X3, [X9, #0] // X3 (value) = a[i]
+
+// storing registers to memory
+SUBI SP, SP, #48 // move stack pointer down for 5 items of space
+STUR X0, [SP, #0]  // store X0 (a) in stack
+STUR X1, [SP, #8]  // store X1 (n) in stack
+STUR X2, [SP, #16] // store X2 (i)  in stack
+STUR X3, [SP, #32] // store X3 (value) in stack
+STUR LR, [SP, #40] // store LR in stack
+
+// X0 is already base adress of a; so already passed to IS_SHIFT
+ADDI X1, X2, #0 // passing i to IS_SHIFT as end
+BL IS_SHIFT // Run IS_SHIFT; save result in X0
+
+ADDI X2, X0, #0 // passing return value from shift to insert in X2
+LDUR X0, [SP, #0] // retrieving X0 (a) from stack; passing to IS_INSERT
+LDUR X1, [SP, #32] // retrieving X3 from stack; passing to insert in X1
+BL IS_INSERT // Run IS_INSERT
+
+// retrieving registers from memory
+LDUR X0, [SP, #0]  // load X0 (a) from stack
+LDUR X1, [SP, #8]  // load X1 (n) from stack
+LDUR X2, [SP, #16] // load X2 (i)  from stack
+LDUR X3, [SP, #32] // load X3 (value) from stack
+LDUR LR, [SP, #40] // load LR in stack
+ADDI SP, SP, #48 // move stack pointer up 5 items
+
+ADDI X2, X2, #1 // i++
+SUBS X15, X2, X1 // i - n
+B.LT IS_MAIN_L // i < n ? If yes, loop
+BR LR // INSERTION_SORT return
+
+
+IS_SHIFT:
+// base address a stored in X0
+// variable end stored in X1
+LSL X9, X1, #3 // offset for end
+ADD X9, X0, X9 // address of a[end]
+LDUR X3, [X9, #0] // X3 (tmp) = a[end]
+SUBI X2, X1, #1 // i = end - 1
+
+IS_SHIFT_L:
+// start with loop run checks
+ADDI X15, X2, #1 // is i + 1 = 0? (is i = -1?)
+CBZ X15, SHIFT_L_EXIT // if yes, exit loop
+LSL X9, X2, #3 // idx offset for i
+ADD X9, X0, X9 // idx of a[i]
+LDUR X9, [X9, #0] // X9 = a[i]
+SUBS X15, X9, X3 // X15 = a[i] - tmp
+B.LE SHIFT_L_EXIT // a[i] <= tmp? If yes, exit loop
+
+ADDI X10, X2, #1 // i + 1
+LSL X10, X10, #3 // IDX offset for i + 1
+ADD X10, X0, X10 // address for a[i + 1]
+STUR X9, [X10, #0] // a[i+1] = a[i]
+SUBI X2, X2, #1 // i--
+B IS_SHIFT_L
+SHIFT_L_EXIT:
+ADDI X0, X2, #1 // return (X0) = i + 1
+BR LR // IS_SHIFT return
+
+
+IS_INSERT:
+// base address a stored in X0
+// variable what stored in X1
+// variable where stored in X2
+LSL X9, X2, #3 // idx offset = where (X2) * 3
+ADD X9, X0, X9 // address of a[where]
+STUR X1, [X9, #0] // a[where] = what
+BR LR // IS_INSERT return
+
+
+BINARY_SEARCH:
+// X0 is base address a
+// X1 is start
+// X2 is end
+// X3 is value
+SUBS X15, X1, X2 // start - end
+B.GT NOT_FOUND // start > end ? if yes, finish
+ADD X9, X2, X1 // end + start
+ADDI X9, X9, #1 // end + start + 1
+LSR X9, X9, #1 // X9 (m) = (end + start + 1) / 2
+LSL X10, X9, #3 // IDX offset for m
+ADD X10, X0, X10 // address for a[m]
+LDUR X10, [X10, #0] // X10 = a[m]
+SUBS X15, X3, X10 // value - a[m]
+CBZ X15, FOUND // a[m] == value ? if yes, return m
+B.GT GO_RIGHT
+SUBI X2, X9, #1 // end = m - 1
+B BINARY_SEARCH // loop back
+GO_RIGHT:
+ADDI X1, X9, #1 // start = m + 1
+B BINARY_SEARCH // loop back
+FOUND:
+ADDI X0, X9, #0 // X0 = m
+BR LR
+NOT_FOUND:
+SUBI X0, XZR, #1 // X0 = -1
+BR LR // BINARY_SEARCH Return
+
+
+// For testing purposes; prints array from memory
+// note that this doesn't strictly follow convention
+// but it's just for testing, so it's fine
+PRINT_ARR:
+ADDI X2, XZR, #0 // i = 0
+PRNL
+PRNL
+PRNL
+PRINT_ARR_L:
+LSL X9, X2, #3 //address offset for i
+ADD X9, X19, X9 // base address + offset
+LDUR X9, [X9, #0] // X9 = a[i]
+PRNT X9
+ADDI X2, X2, #1 // i++
+SUBS X15, X2, X20 // i - n
+B.LT PRINT_ARR_L // i < n ?
+BR LR
+
+// end program
+EXIT:

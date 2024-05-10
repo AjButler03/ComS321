@@ -1,0 +1,1 @@
+python legv8_dissassembler.py $1

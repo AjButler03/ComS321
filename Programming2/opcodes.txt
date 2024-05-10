@@ -1,0 +1,44 @@
+This is a list of supported instructions,
+their instruction type, and their opcode in decimal.
+Essentially just the information in the quick-start quide, but with decimal #'s.
+
+ADD  R  1112
+ADDI I  1160-1161
+AND  R  1104
+ANDI I  1168-1169
+B    B  160-191
+B.EQ CB 672-679 (rt: 0)
+B.NE CB 672-679 (rt: 1)
+B.HS CB 672-679 (rt: 2)
+B.LO CB 672-679 (rt: 3)
+B.MI CB 672-679 (rt: 4)
+B.PL CB 672-679 (rt: 5)
+B.VS CB 672-679 (rt: 6)
+B.VC CB 672-679 (rt: 7)
+B.HI CB 672-679 (rt: 8)
+B.LS CB 672-679 (rt: 9)
+B.GE CB 672-679 (rt: 10)
+B.LT CB 672-679 (rt: 11)
+B.GT CB 672-679 (rt: 12)
+B.LE CB 672-679 (rt: 13)
+BL   B  1184-1215
+BR   R  1712
+CBNZ CB 1448-1455
+CBZ  CB 1440-1447
+EOR  R  1616
+EORI I  1680-1681
+LDUR D  1986
+LSL  R  1691
+LSR  R  1690
+ORR  R  1360
+ORRI I  1424-1425
+STUR D  1984
+SUB  R  1624
+SUBI I  1672-1673
+SUBIS I 1928-1929
+SUBS R  1880
+MUL  R  1240
+PRNT R  2045, register in Rd field
+PRNL R  2044
+DUMP R  2046
+HALT R  2047
